@@ -73,7 +73,7 @@ async function fetchUser(id, beatmaps, reattempt = 0, counter = 0) {
     for await (const beatmap of beatmaps) {
         let score;
         try {
-            const res = await GetUserBeatmapScore(id, beatmap);
+            const res = await GetUserBeatmapScore(id, beatmap.beatmap_id);
             score = new OsuScore(res.score);
         } catch (e) {
             score = { "error": "null" }
@@ -99,7 +99,7 @@ async function fetchUser(id, beatmaps, reattempt = 0, counter = 0) {
 
 function main() {
     fetcher();
-    //looper();
+    looper();
 }
 main();
 
@@ -201,4 +201,5 @@ async function updateScores(connection, id) {
 async function insertScore(connection, score) {
     const score_query = score.getQuery();
     const result = await connection.awaitQuery(score_query.query, score_query.queryValues);
+    console.log(result);
 }
