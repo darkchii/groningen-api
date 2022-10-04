@@ -77,7 +77,6 @@ async function fetchUser(id, beatmaps, reattempt = 0, counter = 0) {
         }
         counter++;
         console.log(`Score fetcher for ${id}: ${counter}/${beatmaps.length}`);
-        await sleep(10);
     }
 
     if (failed.length > 0) {
