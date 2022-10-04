@@ -58,15 +58,13 @@ async function fetchUser(id, beatmaps, reattempt = 0, counter = 0) {
     }
     const failed = [];
     for await (const beatmap of beatmaps) {
-        await sleep(10);
         let score;
         try {
             const res = await GetUserBeatmapScore(id, beatmap);
-            score = new OsuScore(res);
+            score = new OsuScore(res.score);
         } catch (e) {
             score = { "error": "null" }
         }
-
         if (score.error !== 'null') {
             try {
                 const connection = mysql.createConnection(connConfig);
@@ -77,10 +75,9 @@ async function fetchUser(id, beatmaps, reattempt = 0, counter = 0) {
                 continue;
             }
         }
-
-
         counter++;
         console.log(`Score fetcher for ${id}: ${counter}/${beatmaps.length}`);
+        await sleep(10);
     }
 
     if (failed.length > 0) {
