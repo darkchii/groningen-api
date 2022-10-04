@@ -201,5 +201,4 @@ async function updateScores(connection, id) {
 async function insertScore(connection, score) {
     const score_query = score.getQuery();
     const result = await connection.awaitQuery(score_query.query, score_query.queryValues);
-    console.log(result);
 }
