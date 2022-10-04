@@ -89,6 +89,17 @@ async function GetUserBeatmapScore(user_id, beatmap_id, mode = 'osu') {
     }
 }
 
+module.exports.GetUserMostPlayed = GetUserMostPlayed;
+async function GetUserMostPlayed(user_id, mode = 'osu', limit = 100, offset = 0) {
+    const res = await AuthorizedApiCall(`https://osu.ppy.sh/api/v2/users/${user_id}/beatmapsets/most_played?mode=${mode}&limit=${limit}&offset=${offset}`);
+    try {
+        return res.data;
+    } catch (err) {
+        console.log(err);
+        return null;
+    }
+}
+
 module.exports.GetBeatmaps = GetBeatmaps;
 async function GetBeatmaps() {
     const response = await axios.get("https://osu.respektive.pw/beatmaps");

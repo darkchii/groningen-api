@@ -1,6 +1,6 @@
 const moment = require('moment/moment');
 const mysql = require('mysql-await');
-const { GetUser, GetBeatmaps, GetUserRecent, getModsEnum, GetUserBeatmapScore } = require('./osu');
+const { GetUser, GetBeatmaps, GetUserRecent, getModsEnum, GetUserBeatmapScore, GetUserMostPlayed } = require('./osu');
 const OsuScore = require('./score');
 require('dotenv').config();
 
@@ -33,22 +33,37 @@ async function looper() {
 
 // adds EVERY score of a user to the database
 async function fetcher() {
-    const beatmaps = await GetBeatmaps();
-    const connection = mysql.createConnection(connConfig);
-    const result = await connection.awaitQuery(`SELECT * FROM groningen_user_ids`);
-    await connection.end();
+    while (true) {
+        //const beatmaps = await GetBeatmaps();
+        const connection = mysql.createConnection(connConfig);
+        const result = await connection.awaitQuery(`SELECT * FROM groningen_user_ids`);
+        await connection.end();
 
-    (async function () {
         for await (const row of result) {
-            if (row.is_fetched===1) {
+            if (row.is_fetched === 1) {
                 continue;
             }
+            const beatmaps = [];
+            let offset = 0;
             console.log(`Started fetching scores for ${row.id}`);
+            while (true) {
+                const _beatmaps = await GetUserMostPlayed(row.id, 'osu', 100, offset);
+                if (_beatmaps.length === 0) {
+                    break;
+                }
+                beatmaps.push(..._beatmaps);
+                offset += 100;
+                console.log(`Added beatmap range ${offset - 100} - ${offset} for user ${row.id}`);
+            }
+            console.log(`Checking ${beatmaps.length} beatmaps for ${row.id}`);
             await fetchUser(row.id, beatmaps);
             console.log(`Finished fetching scores for ${row.id}`);
+            const connection = mysql.createConnection(connConfig);
             await connection.awaitQuery(`UPDATE groningen_user_ids SET is_fetched = 1 WHERE id = ${row.id}`);
+            await connection.end();
         }
-    })();
+        await sleep(process.env.SCORE_FETCH_INTERVAL);
+    }
 }
 
 async function fetchUser(id, beatmaps, reattempt = 0, counter = 0) {
@@ -86,7 +101,7 @@ async function fetchUser(id, beatmaps, reattempt = 0, counter = 0) {
 
 function main() {
     fetcher();
-    looper();
+    //looper();
 }
 main();
 
