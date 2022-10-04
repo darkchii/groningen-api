@@ -33,9 +33,15 @@ router.get('/', async function (req, res, next) {
   });
   const query = buildQuery(req.query);
   const result = await connection.awaitQuery(`SELECT * FROM groningen_user_ids ${req.query.groningen_only ? `WHERE is_groningen = 1` : ''}`);
-  for await(let user of result){
+
+  for await (let user of result) {
+    user.osu = (await connection.awaitQuery(`SELECT * FROM groningen_users WHERE osu_id = ? ${query[0]}`, [user.id, ...query[1]]))[0];
     user.statistics = await getUserStats(connection, user.id, query);
   };
+  for await (let user of result) {
+    user.ranking = await getUserRanking(connection, user.id, query, result, req.query.groningen_only);
+  };
+
   res.json(result);
   await connection.end();
 });
@@ -63,12 +69,37 @@ router.get('/:id', async function (req, res, next) {
       statistics = await getUserStats(connection, req.params.id, builtQuery);
     }
     user.statistics = statistics;
+    user.ranking = await getUserRanking(connection, req.params.id, builtQuery, null, req.query.groningen_only);
   }
   res.json(user);
   await connection.end();
 });
 
-async function getUserStats(connection, user_id, query){
+async function getUserRanking(connection, user_id, query, users = null, groningen_only = true) {
+  if (users === null) {
+    users = await connection.awaitQuery(`SELECT * FROM groningen_user_ids ${groningen_only ? `WHERE is_groningen = 1` : ''}`);
+    for await(let user of users) {
+      user.statistics = await getUserStats(connection, user.id, query);
+    }
+  }
+
+  const ranking = {
+    grade_total_ss: users.sort((a, b) => { return b.statistics.grade_total_ss - a.statistics.grade_total_ss }).findIndex((user) => { return user.id == user_id }) + 1,
+    grade_ssh: users.sort((a, b) => { return b.statistics.grade_ss - a.statistics.grade_ss }).findIndex((user) => { return user.id == user_id }) + 1,
+    grade_ss: users.sort((a, b) => { return b.statistics.grade_ssh - a.statistics.grade_ssh }).findIndex((user) => { return user.id == user_id }) + 1,
+    grade_total_s: users.sort((a, b) => { return b.statistics.grade_total_ss - a.statistics.grade_total_ss }).findIndex((user) => { return user.id == user_id }) + 1,
+    grade_sh: users.sort((a, b) => { return b.statistics.grade_s - a.statistics.grade_s }).findIndex((user) => { return user.id == user_id }) + 1,
+    grade_s: users.sort((a, b) => { return b.statistics.grade_sh - a.statistics.grade_sh }).findIndex((user) => { return user.id == user_id }) + 1,
+    grade_a: users.sort((a, b) => { return b.statistics.grade_a - a.statistics.grade_a }).findIndex((user) => { return user.id == user_id }) + 1,
+    grade_b: users.sort((a, b) => { return b.statistics.grade_b - a.statistics.grade_b }).findIndex((user) => { return user.id == user_id }) + 1,
+    grade_c: users.sort((a, b) => { return b.statistics.grade_c - a.statistics.grade_c }).findIndex((user) => { return user.id == user_id }) + 1,
+    grade_d: users.sort((a, b) => { return b.statistics.grade_d - a.statistics.grade_d }).findIndex((user) => { return user.id == user_id }) + 1,
+    total_pp: users.sort((a, b) => { return b.statistics.total_pp - a.statistics.total_pp }).findIndex((user) => { return user.id == user_id }) + 1,
+  }
+  return ranking;
+}
+
+async function getUserStats(connection, user_id, query) {
   return {
     grade_total_ss: (await connection.awaitQuery(`SELECT count(*) FROM groningen_scores WHERE user_id = ? AND (rank = 'X' OR rank = 'XH') ${query[0]}`, [user_id, ...query[1]]))[0]['count(*)'],
     grade_ss: (await connection.awaitQuery(`SELECT count(*) FROM groningen_scores WHERE user_id = ? AND (rank = 'X') ${query[0]}`, [user_id, ...query[1]]))[0]['count(*)'],
