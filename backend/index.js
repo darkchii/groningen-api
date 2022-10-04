@@ -1,6 +1,6 @@
 const moment = require('moment/moment');
 const mysql = require('mysql-await');
-const { GetUser, GetBeatmaps, GetUserRecent, getModsEnum } = require('./osu');
+const { GetUser, GetBeatmaps, GetUserRecent, getModsEnum, GetUserBeatmapScore } = require('./osu');
 const OsuScore = require('./score');
 require('dotenv').config();
 
@@ -13,6 +13,7 @@ const connConfig = {
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+//updates user profile and recent plays
 async function looper() {
     while (true) {
         // console.log('looping');
@@ -30,10 +31,65 @@ async function looper() {
     }
 }
 
-function main() {
-    (async () => {
-        console.log(await GetBeatmaps());
+// adds EVERY score of a user to the database
+async function fetcher() {
+    const beatmaps = await GetBeatmaps();
+    const connection = mysql.createConnection(connConfig);
+    const result = await connection.awaitQuery(`SELECT * FROM groningen_user_ids`);
+    await connection.end();
+
+    (async function () {
+        for await (const row of result) {
+            if (row.is_fetched===1) {
+                continue;
+            }
+            console.log(`Started fetching scores for ${row.id}`);
+            await fetchUser(row.id, beatmaps);
+            console.log(`Finished fetching scores for ${row.id}`);
+            await connection.awaitQuery(`UPDATE groningen_user_ids SET is_fetched = 1 WHERE id = ${row.id}`);
+        }
     })();
+}
+
+async function fetchUser(id, beatmaps, reattempt = 0, counter = 0) {
+    if (reattempt > 5) {
+        console.log(`Failed to fetch scores for user ${id}`);
+        return;
+    }
+    const failed = [];
+    for await (const beatmap of beatmaps) {
+        await sleep(1000);
+        let score;
+        try {
+            const res = await GetUserBeatmapScore(id, beatmap);
+            score = new OsuScore(res);
+        } catch (e) {
+            score = { "error": "null" }
+        }
+
+        if (score.error !== 'null') {
+            try {
+                const connection = mysql.createConnection(connConfig);
+                insertScore(connection, score);
+                await connection.end();
+            } catch (e) {
+                failed.push(beatmap);
+                continue;
+            }
+        }
+
+
+        counter++;
+        console.log(`Score fetcher for ${id}: ${counter}/${beatmaps.length}`);
+    }
+
+    if (failed.length > 0) {
+        await fetchUser(id, failed, reattempt + 1, counter);
+    }
+}
+
+function main() {
+    fetcher();
     looper();
 }
 main();
@@ -126,50 +182,14 @@ async function updateScores(connection, id) {
         scores.filter(score => score.best_id === null);
 
         scores.forEach(async score => {
-            const query = `INSERT INTO groningen_scores (
-                id, user_id, beatmap_id, created_at, max_combo, mode, mods, pp, rank, score, count_300, count_100, count_50, count_miss, count_geki, count_katu, type
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE
-                id = VALUES(id),
-                user_id = VALUES(user_id),
-                beatmap_id = VALUES(beatmap_id),
-                created_at = VALUES(created_at),
-                max_combo = VALUES(max_combo),
-                mode = VALUES(mode),
-                mods = VALUES(mods),
-                pp = VALUES(pp),
-                rank = VALUES(rank),
-                score = VALUES(score),
-                count_300 = VALUES(count_300),
-                count_100 = VALUES(count_100),
-                count_50 = VALUES(count_50),
-                count_miss = VALUES(count_miss),
-                count_geki = VALUES(count_geki),
-                count_katu = VALUES(count_katu),
-                type = VALUES(type)`;
-
-            const queryValues = [
-                score.id,
-                score.user_id,
-                score.beatmap_id,
-                `${moment(score.created_at).format('YYYY-MM-DD HH:mm:ss')}`,
-                score.max_combo,
-                score.mode,
-                getModsEnum(score.mods),
-                score.pp,
-                score.rank,
-                score.score,
-                score.count_300,
-                score.count_100,
-                score.count_50,
-                score.count_miss,
-                score.count_geki,
-                score.count_katu,
-                score.type
-            ];
-
-            const result = await connection.awaitQuery(query, queryValues);
+            insertScore(connection, score);
+            // console.log(`${id}: Inserted or updated score ${score.id}`);
             // console.log(result);
         });
     }
+}
 
+async function insertScore(connection, score) {
+    const score_query = score.getQuery();
+    const result = await connection.awaitQuery(score_query.query, score_query.queryValues);
 }

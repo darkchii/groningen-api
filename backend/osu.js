@@ -78,6 +78,17 @@ async function GetUserRecent(user_id, mode = 'osu', include_fails = false, limit
     }
 }
 
+module.exports.GetUserBeatmapScore = GetUserBeatmapScore;
+async function GetUserBeatmapScore(user_id, beatmap_id, mode = 'osu') {
+    const res = await AuthorizedApiCall(`https://osu.ppy.sh/api/v2/beatmaps/${beatmap_id}/scores/users/${user_id}?mode=${mode}`);
+    try {
+        return res.data;
+    } catch (err) {
+        console.log(err);
+        return null;
+    }
+}
+
 module.exports.GetBeatmaps = GetBeatmaps;
 async function GetBeatmaps() {
     const response = await axios.get("https://osu.respektive.pw/beatmaps");
