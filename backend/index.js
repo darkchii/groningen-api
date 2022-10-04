@@ -37,7 +37,6 @@ async function fetcher() {
         //const beatmaps = await GetBeatmaps();
         const connection = mysql.createConnection(connConfig);
         const result = await connection.awaitQuery(`SELECT * FROM groningen_user_ids`);
-        await connection.end();
 
         for await (const row of result) {
             if (row.is_fetched === 1) {
@@ -58,10 +57,9 @@ async function fetcher() {
             console.log(`Checking ${beatmaps.length} beatmaps for ${row.id}`);
             await fetchUser(row.id, beatmaps);
             console.log(`Finished fetching scores for ${row.id}`);
-            const _connection = mysql.createConnection(connConfig);
-            await _connection.awaitQuery(`UPDATE groningen_user_ids SET is_fetched = 1 WHERE id = ${row.id}`);
-            await _connection.end();
+            await connection.awaitQuery(`UPDATE groningen_user_ids SET is_fetched = 1 WHERE id = ${row.id}`);
         }
+        await connection.end();
         await sleep(process.env.SCORE_FETCH_INTERVAL);
     }
 }
