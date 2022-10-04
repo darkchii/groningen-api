@@ -58,7 +58,7 @@ async function fetchUser(id, beatmaps, reattempt = 0, counter = 0) {
     }
     const failed = [];
     for await (const beatmap of beatmaps) {
-        await sleep(1000);
+        await sleep(10);
         let score;
         try {
             const res = await GetUserBeatmapScore(id, beatmap);
