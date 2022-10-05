@@ -73,6 +73,8 @@ Returns the above object with the specific user data. (https://darkchii.nl/groni
 `/api/users`
 Returns a list of all players, each using the structure above. (https://darkchii.nl/groningen/api/users)
 
+*Add `groningen_only=true` query parameter to the url to filter groningen-only players.*
+
 
 The `statistics` and `ranking` objects are based on every single **top** score on beatmaps. At first they are all fetched from their most played beatmaps list, then it's based on recent plays checked every 20 minutes (or whatever is configured).
 
