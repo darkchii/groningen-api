@@ -47,7 +47,7 @@ class OsuScore {
             type = VALUES(type)`;
 
         const queryValues = [
-            this.id,
+            `${this.user_id}-${this.beatmap_id}`,
             this.user_id,
             this.beatmap_id,
             `${moment(this.created_at).format('YYYY-MM-DD HH:mm:ss')}`,
