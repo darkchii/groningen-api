@@ -53,7 +53,6 @@ async function fetcher() {
                 beatmaps.push(..._beatmaps);
                 offset += 100;
                 console.log(`Added beatmap range ${offset - 100} - ${offset} for user ${row.id}`);
-                break;
             }
             console.log(`Checking ${beatmaps.length} beatmaps for ${row.id}`);
             await fetchUser(row.id, beatmaps);
