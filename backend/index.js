@@ -197,7 +197,7 @@ async function updateScores(connection, id) {
 }
 
 async function getUserNullScores(connection, id) {
-    const result = await connection.awaitQuery(`SELECT * FROM groningen_scores WHERE user_id = ${id} AND pp IS NULL AND (approved=1 OR approved=2)`);
+    const result = await connection.awaitQuery(`SELECT * FROM groningen_scores INNER JOIN beatmap ON beatmap.beatmap_id = groningen_scores.beatmap_id WHERE user_id = ${id} AND pp IS NULL AND (approved=1 OR approved=2)`);
     return result;
 }
 
