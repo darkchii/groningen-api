@@ -191,7 +191,6 @@ async function updateScores(connection, id) {
 
     const nullScores = await getUserNullScores(connection, id);
     if(nullScores.length > 0) {
-        console.log(nullScores[0]);
         console.log(`Found ${nullScores.length} null scores for user ${id}`);
         await fetchUser(id, nullScores);
     }
