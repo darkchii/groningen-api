@@ -32,15 +32,37 @@ router.get('/', async function (req, res, next) {
     });
   });
   const query = buildQuery(req.query);
-  const result = await connection.awaitQuery(`SELECT * FROM groningen_user_ids ${req.query.groningen_only ? `WHERE is_groningen = 1` : ''}`);
+  let result = await connection.awaitQuery(`SELECT * FROM groningen_user_ids INNER JOIN groningen_users ON groningen_users.osu_id = groningen_user_ids.id ${req.query.groningen_only === 'true' ? `WHERE is_groningen = 1` : ''}`);
 
-  for await (let user of result) {
-    user.osu = (await connection.awaitQuery(`SELECT * FROM groningen_users WHERE osu_id = ? ${query[0]}`, [user.id, ...query[1]]))[0];
-    user.statistics = await getUserStats(connection, user.id, query);
-  };
-  for await (let user of result) {
-    user.ranking = await getUserRanking(connection, user.id, query, result, req.query.groningen_only);
-  };
+  if (req.query.sorter !== undefined) {
+    switch (req.query.sorter) {
+      case 'clears':
+        result = result.sort((a, b) => {
+          return (b.count_ssh + b.count_ss + b.count_sh + b.count_s + b.count_a) - (a.count_ssh + a.count_ss + a.count_sh + a.count_s + a.count_a);
+        });
+        break;
+      case 'total_ss':
+        result = result.sort((a, b) => {
+          return (b.count_ssh + b.count_ss) - (a.count_ssh + a.count_ss);
+        });
+        break;
+      case 'total_s':
+        result = result.sort((a, b) => {
+          return (b.count_sh + b.count_s) - (a.count_sh + a.count_s);
+        });
+        break;
+      case 'city':
+        result = result.sort((a, b) => {
+          return ('' + b.city).localeCompare(a.city);
+        });
+        break;
+      default:
+        result = result.sort((a, b) => {
+          return b[req.query.sorter] - a[req.query.sorter];
+        });
+        break;
+    }
+  }
 
   res.json(result);
   await connection.end();
@@ -78,7 +100,7 @@ router.get('/:id', async function (req, res, next) {
 async function getUserRanking(connection, user_id, query, users = null, groningen_only = true) {
   if (users === null) {
     users = await connection.awaitQuery(`SELECT * FROM groningen_user_ids ${groningen_only ? `WHERE is_groningen = 1` : ''}`);
-    for await(let user of users) {
+    for await (let user of users) {
       user.statistics = await getUserStats(connection, user.id, query);
     }
   }

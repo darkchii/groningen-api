@@ -53,23 +53,20 @@ async function fetcher() {
                 beatmaps.push(..._beatmaps);
                 offset += 100;
                 console.log(`Added beatmap range ${offset - 100} - ${offset} for user ${row.id}`);
+                break;
             }
             console.log(`Checking ${beatmaps.length} beatmaps for ${row.id}`);
             await fetchUser(row.id, beatmaps);
             console.log(`Finished fetching scores for ${row.id}`);
-            await connection.awaitQuery(`UPDATE groningen_user_ids SET is_fetched = 1 WHERE id = ${row.id}`);
+            await connection.awaitQuery(`UPDATE groningen_user_ids SET is_fetched = 1 WHERE id = ${row.id}`); //23635008, 15413621
         }
         await connection.end();
         await sleep(process.env.SCORE_FETCH_INTERVAL);
     }
 }
 
-async function fetchUser(id, beatmaps, reattempt = 0, counter = 0) {
-    if (reattempt > 5) {
-        console.log(`Failed to fetch scores for user ${id}`);
-        return;
-    }
-    const failed = [];
+async function fetchUser(id, beatmaps) {
+    let count = 0;
     for await (const beatmap of beatmaps) {
         let score;
         try {
@@ -84,16 +81,12 @@ async function fetchUser(id, beatmaps, reattempt = 0, counter = 0) {
                 insertScore(connection, score);
                 await connection.end();
             } catch (e) {
-                failed.push(beatmap);
+                //failed.push(beatmap);
                 continue;
             }
         }
         counter++;
         console.log(`Score fetcher for ${id}: ${counter}/${beatmaps.length}`);
-    }
-
-    if (failed.length > 0) {
-        await fetchUser(id, failed, reattempt + 1, counter);
     }
 }
 
