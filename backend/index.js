@@ -66,7 +66,7 @@ async function fetcher() {
 }
 
 async function fetchUser(id, beatmaps) {
-    let count = 0;
+    let counter = 0;
     for await (const beatmap of beatmaps) {
         let score;
         try {
