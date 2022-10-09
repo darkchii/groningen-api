@@ -46,8 +46,10 @@ Returns the above object with the specific user data. (https://darkchii.nl/groni
 Returns a list of all players, each using the structure above. (https://darkchii.nl/groningen/api/users)
 
 **Parameters**
+
 `groningen_only=true` - Filter to output only users from the province of Groningen
 `sorter=pp` - Sort by a certain column, works on all numeric values and city column
+
 
 
 The `statistics` and `ranking` objects are based on every single **top** score on beatmaps. At first they are all fetched from their most played beatmaps list, then it's based on recent plays checked every 20 minutes (or whatever is configured).
