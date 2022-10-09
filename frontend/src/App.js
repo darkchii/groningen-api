@@ -1,4 +1,4 @@
-import { Box, ButtonGroup, Container, createTheme, CssBaseline, FormControlLabel, Grid, Link, Paper, Stack, Switch, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Tooltip, Typography } from '@mui/material';
+import { Avatar, Box, ButtonGroup, Chip, Container, createTheme, CssBaseline, FormControlLabel, Grid, Link, Paper, Stack, Switch, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Tooltip, Typography } from '@mui/material';
 import './App.css';
 import { ChiiContainer } from './Components/ChiiContainer';
 import Theme from './Theme';
@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { getUsers } from './Helpers';
 import moment from 'moment/moment';
 import InfoIcon from '@mui/icons-material/Info';
+import { UserChip } from './Components/UserChip';
 
 function App() {
   const [sorter, setSorter] = useState(Sorters[0].key);
@@ -49,11 +50,9 @@ function App() {
                       <TableBody>
                         {
                           userList.length > 0 ? userList.map((user, index) => (
-                            <TableRow sx={{
-                              backgroundColor: `${user.is_groningen ? 'inherit' : 'rgba(255,0,0,0.1)'}`,
-                            }}>
+                            <TableRow sx={{ backgroundColor: `${user.is_groningen ? 'inherit' : 'rgba(255,0,0,0.1)'}` }}>
                               <TableCell>{index + 1}</TableCell>
-                              <TableCell><Tooltip title={user.note}><Link href={`https://osu.ppy.sh/users/${user.id}`} target='_blank'>{user.username}</Link></Tooltip></TableCell>
+                              <TableCell><UserChip user={user} /></TableCell>
                               <TableCell>{user.pp.toLocaleString('en-US')}</TableCell>
                               <TableCell>{user.play_count.toLocaleString('en-US')}</TableCell>
                               <TableCell>{Math.round(moment.duration(user.play_time, 'seconds').asHours())} hours</TableCell>
