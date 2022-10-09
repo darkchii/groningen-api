@@ -9,6 +9,8 @@ import { getUsers } from './Helpers';
 import moment from 'moment/moment';
 import InfoIcon from '@mui/icons-material/Info';
 import { UserChip } from './Components/UserChip';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpwardRounded';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownwardRounded';
 
 function App() {
   const [sorter, setSorter] = useState(Sorters[0].key);
@@ -122,7 +124,13 @@ function App() {
                           columns.map((column) => (
                             column.active && (
                               <TableCell align={column.align} maxWidth={column.width}>
-                                <Link onClick={() => handleSorterChange(column)}>{column.label}</Link>
+                                <Link onClick={() => handleSorterChange(column)}>
+                                  <Chip size='small' icon={column.reverse ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />} sx={{
+                                    bgcolor: column.id === sorter ? '#FF66AA33' : '#ffffff33', '&:hover': {
+                                      boxShadow: `0 0 10px 0 #ffffffff`,
+                                    }
+                                  }} label={column.label} />
+                                </Link>
                                 {/* <ChiiButton size='small' onClick={() => setSorter(column.id)} selected={column.id === sorter} name={column.label} color='#FF66AA' /> */}
                               </TableCell>
                             )
