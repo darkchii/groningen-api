@@ -190,14 +190,14 @@ async function updateScores(connection, id) {
     }
 
     const nullScores = await getUserNullScores(connection, id);
-    if(nullScores.length > 0) {
+    if (nullScores.length > 0) {
         console.log(`Found ${nullScores.length} null scores for user ${id}`);
         await fetchUser(id, nullScores);
     }
 }
 
-async function getUserNullScores(connection, id){
-    const result = await connection.awaitQuery(`SELECT * FROM groningen_scores WHERE user_id = ${id} AND pp IS NULL`);
+async function getUserNullScores(connection, id) {
+    const result = await connection.awaitQuery(`SELECT * FROM groningen_scores WHERE user_id = ${id} AND pp IS NULL AND (approved=1 OR approved=2)`);
     return result;
 }
 
