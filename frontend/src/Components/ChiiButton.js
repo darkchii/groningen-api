@@ -10,7 +10,7 @@ export class ChiiButton extends Component {
                     backgroundColor: '#1b2838bb',
                     borderRadius: borderSize,
                     display: 'flex',
-                    p: 1,
+                    p: this.props.size === 'small' ? 0.5 : 1,
                     color: 'white',
                     textDecoration: 'none',
                     userSelect: 'none',
@@ -24,6 +24,7 @@ export class ChiiButton extends Component {
                         borderLeftWidth: '15px',
                         borderLeftStyle: 'solid',
                         boxShadow: `0px 0px 10px 0px ${this.props.color}55`,
+                        pr: -15
                     }
                 }}>
                     <Typography variant='subtitle2'>{this.props.name}</Typography>

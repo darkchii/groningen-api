@@ -14,10 +14,72 @@ function App() {
   const [sorter, setSorter] = useState(Sorters[0].key);
   const [userList, setUserList] = useState([]);
   const [groningenOnly, setGroningenOnly] = useState(true);
+  const [columns, setColumns] = useState([
+    { active: true, reverse: false, id: 'pp', label: 'PP', align: 'right', width: 170, formatter: (value) => value > 0 ? `${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp` : '-' },
+    { active: true, reverse: false, id: 'total_pp', label: 'Total PP', align: 'right', width: 170, formatter: (value) => value > 0 ? `${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp` : '-' },
+    { active: true, reverse: false, id: 'play_count', label: 'Playcount', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
+    { active: true, reverse: false, id: 'play_time', label: 'Playtime', align: 'right', width: 170, formatter: (value) => `${Math.round(moment.duration(value, 'seconds').asHours())} hours` },
+    { active: true, reverse: false, id: 'hit_accuracy', label: 'Accuracy', align: 'right', width: 170, formatter: (value) => `${value.toFixed(2)}%` },
+    { active: true, reverse: false, id: 'ranked_score', label: 'R. Score', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
+    { active: true, reverse: false, id: 'total_score', label: 'T. Score', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
+    { active: true, reverse: false, id: 'clears', label: 'Clears', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
+    { active: true, reverse: false, id: 'total_ss', label: 'SS', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
+    { active: true, reverse: false, id: 'total_s', label: 'S', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
+    { active: true, reverse: false, id: 'count_a', label: 'A', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
+    { active: false, reverse: false, id: 'count_b', label: 'B', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
+    { active: false, reverse: false, id: 'count_c', label: 'C', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
+    { active: false, reverse: false, id: 'count_d', label: 'D', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
+    { active: true, reverse: false, id: 'city', label: 'Plaats', align: 'right', width: 170, formatter: (value) => value },
+  ]);
+  const [updateTable, triggerTableUpdate] = useState(false);
+  const [updateUsers, triggerUsersUpdate] = useState(false);
+
+  const updateUsersFunc = () => {
+    getUsers(sorter, groningenOnly).then(users => {
+      let reverse = false;
+      columns.forEach(column => {
+        if (column.id === sorter) {
+          reverse = column.reverse;
+        }
+      });
+      if (reverse) {
+        users.reverse();
+      }
+      setUserList(users);
+    });
+  };
 
   useEffect(() => {
-    getUsers(sorter, groningenOnly).then(users => setUserList(users));
+    updateUsersFunc();
   }, [sorter, groningenOnly]);
+
+  useEffect(() => {
+    if (updateUsers) {
+      updateUsersFunc();
+      triggerUsersUpdate(false);
+    }
+  }, [updateUsers]);
+
+  const handleSorterChange = (_sorter) => {
+    if (sorter === _sorter.id) {
+      columns.forEach(column => {
+        if (column.id === _sorter.id) {
+          column.reverse = !column.reverse;
+        }
+      });
+      triggerUsersUpdate(true);
+      triggerTableUpdate(false);
+    } else {
+      setSorter(_sorter.id);
+    }
+  }
+
+  useEffect(() => {
+    if (updateTable) {
+      setColumns(columns);
+      triggerTableUpdate(false);
+    }
+  }, [updateTable]);
 
   return (
     <ThemeProvider theme={createTheme(Theme)}>
@@ -26,67 +88,67 @@ function App() {
         <Grid>
           <ChiiContainer>
             <Box sx={{ m: 0, p: 0, width: '100%', borderRadius: '5px' }} component="img" src="Images/groningen.png"></Box>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={10.5}>
-                <Grid sx={{ p: 1, borderRadius: '5px', backgroundColor: '#1b283877' }}>
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>#</TableCell>
-                          <TableCell>Naam</TableCell>
-                          <TableCell>PP</TableCell>
-                          <TableCell>Playcount</TableCell>
-                          <TableCell>Playtime</TableCell>
-                          <TableCell>Accuracy</TableCell>
-                          <TableCell>Ranked Score</TableCell>
-                          <TableCell>Total Score</TableCell>
-                          <TableCell>Clears</TableCell>
-                          <TableCell>Total SS</TableCell>
-                          <TableCell>Total S</TableCell>
-                          <TableCell>Plaats</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {
-                          userList.length > 0 ? userList.map((user, index) => (
-                            <TableRow sx={{ backgroundColor: `${user.is_groningen ? 'inherit' : 'rgba(255,0,0,0.1)'}` }}>
-                              <TableCell>{index + 1}</TableCell>
-                              <TableCell><UserChip user={user} /></TableCell>
-                              <TableCell>{user.pp.toLocaleString('en-US')}</TableCell>
-                              <TableCell>{user.play_count.toLocaleString('en-US')}</TableCell>
-                              <TableCell>{Math.round(moment.duration(user.play_time, 'seconds').asHours())} hours</TableCell>
-                              <TableCell>{user.hit_accuracy.toFixed(1)}%</TableCell>
-                              <TableCell>{user.ranked_score.toLocaleString('en-US')}</TableCell>
-                              <TableCell>{user.total_score.toLocaleString('en-US')}</TableCell>
-                              <TableCell>{(user.count_ss + user.count_ssh + user.count_s + user.count_sh + user.count_a).toLocaleString('en-US')}</TableCell>
-                              <TableCell>{(user.count_ss + user.count_ssh).toLocaleString('en-US')}</TableCell>
-                              <TableCell>{(user.count_s + user.count_sh).toLocaleString('en-US')}</TableCell>
-                              <TableCell>{user.city}</TableCell>
-                            </TableRow>
-                          )) : <></>
-                        }
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Grid>
-                <Grid sx={{ p: 1, mt: 1, borderRadius: '5px', backgroundColor: '#1b283877' }}>
-                  <Typography variant="body2" align="center">
-                    Als je nog niet in de lijst staat en erin wil, vraag mij via Discord: Amayakase#9198
-                  </Typography>
+            <Grid>
+              <Grid sx={{ p: 1, mt: 1, borderRadius: '5px', backgroundColor: '#1b283877' }}>
+                <Grid container>
+                  <Grid item xs={12} md={10}>
+                    <Typography variant="body2" align="center">Dit zijn de leaderboards voor de provincie Groningen!</Typography>
+                    <Typography variant="body2" align="center">Als je nog niet in de lijst staat en erin wil, vraag mij via Discord: Amayakase#9198</Typography>
+                    <Grid align="center">
+                      {
+                        columns.map((column) => (
+                          <FormControlLabel control={<Switch size='small' onChange={event => {
+                            column.active = event.target.checked;
+                            triggerTableUpdate(true);
+                          }} checked={column.active} />} label={column.label} />
+                        ))
+                      }
+                    </Grid>
+                  </Grid>
+                  <Grid item xs={12} md={2}>
+                    <FormControlLabel control={<Switch onChange={event => setGroningenOnly(event.target.checked)} checked={groningenOnly} />} label="Alleen Groningen" />
+                    {/* <FormControlLabel control={<Switch onChange={event => setReverseState(event.target.checked)} checked={reverseResult} />} label="Omgekeerde volgorde" /> */}
+                  </Grid>
                 </Grid>
               </Grid>
-              <Grid item xs={12} sm={1.5}>
-                <Grid sx={{ p: 1, borderRadius: '5px', backgroundColor: '#1b283877' }}>
-                  <Stack orientation="vertical" sx={{ width: '100%' }} spacing={1}>
-                    {
-                      Sorters.map((_sorter) => (
-                        <ChiiButton onClick={() => setSorter(_sorter.key)} selected={_sorter.key === sorter} name={_sorter.title} color='#FF66AA' />
-                      ))
-                    }
-                    <FormControlLabel control={<Switch onChange={event => setGroningenOnly(event.target.checked)} checked={groningenOnly} />} label="Alleen Groningen" />
-                  </Stack>
-                </Grid>
+              <Grid sx={{ p: 1, mt: 1, borderRadius: '5px', backgroundColor: '#1b283877' }}>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell maxWidth={0.1}>#</TableCell>
+                        <TableCell maxWidth={0.2}>Naam</TableCell>
+                        {
+                          columns.map((column) => (
+                            column.active && (
+                              <TableCell align={column.align} maxWidth={column.width}>
+                                <Link onClick={() => handleSorterChange(column)}>{column.label}</Link>
+                                {/* <ChiiButton size='small' onClick={() => setSorter(column.id)} selected={column.id === sorter} name={column.label} color='#FF66AA' /> */}
+                              </TableCell>
+                            )
+                          ))
+                        }
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {
+                        userList.length > 0 ? userList.map((user, index) => (
+                          <TableRow sx={{ backgroundColor: `${user.is_groningen ? 'inherit' : 'rgba(255,0,0,0.1)'}` }}>
+                            <TableCell maxWidth={0.1}>{index + 1}</TableCell>
+                            <TableCell maxWidth={0.2}><UserChip user={user} /></TableCell>
+                            {
+                              columns.map((column) => (
+                                column.active && (
+                                  <TableCell align={column.align} maxWidth={column.width}>{column.formatter(user[column.id])}</TableCell>
+                                )
+                              ))
+                            }
+                          </TableRow>
+                        )) : <></>
+                      }
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               </Grid>
             </Grid>
           </ChiiContainer>

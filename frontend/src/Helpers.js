@@ -10,7 +10,6 @@ export async function getUsers(sorter, groningen_only = true){
         const res = await axios.get(`${getApiUrl()}users?groningen_only=${groningen_only}&sorter=${sorter}`, { headers: { "Access-Control-Allow-Origin": "*" } });
         users = res.data;
         users = users.filter(user => user.username !== undefined);
-        console.log(users);
     }catch(e){
         users = [];
     }

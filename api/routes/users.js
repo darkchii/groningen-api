@@ -32,27 +32,36 @@ router.get('/', async function (req, res, next) {
     });
   });
   const query = buildQuery(req.query);
-  let result = await connection.awaitQuery(`SELECT * FROM groningen_user_ids INNER JOIN groningen_users ON groningen_users.osu_id = groningen_user_ids.id ${req.query.groningen_only === 'true' ? `WHERE is_groningen = 1` : ''}`);
+  const selector = `
+  DISTINCT(groningen_user_ids.id) as id, groningen_users.username as username, added, note, is_fetched, city, is_groningen, color,
+  osu_id, join_date, level, pp_rank, groningen_users.pp as pp, ranked_score, hit_accuracy, play_count, play_time, total_score, total_hits, maximum_combo, replays_watched, is_ranked, country_rank, 
+  scores.total_pp, scores.clears, (scores.count_ss+scores.count_ssh) as total_ss, scores.count_ssh, scores.count_ss, (scores.count_s+scores.count_sh) as total_s, scores.count_sh, scores.count_s, scores.count_a, scores.count_b, scores.count_c, scores.count_d
+  `;
+  let result = await connection.awaitQuery(`
+    SELECT ${selector} FROM groningen_user_ids 
+    INNER JOIN groningen_users ON groningen_users.osu_id = groningen_user_ids.id 
+    LEFT OUTER JOIN (
+      SELECT 
+        user_id, 
+        sum(pp) as total_pp, 
+        count(*) as clears,
+        count(case when rank = 'XH' then 1 end) as count_ssh,
+        count(case when rank = 'X' then 1 end) as count_ss,
+        count(case when rank = 'SH' then 1 end) as count_sh,
+        count(case when rank = 'S' then 1 end) as count_s,
+        count(case when rank = 'A' then 1 end) as count_a,
+        count(case when rank = 'B' then 1 end) as count_b,
+        count(case when rank = 'C' then 1 end) as count_c,
+        count(case when rank = 'D' then 1 end) as count_d
+        FROM groningen_scores GROUP BY user_id
+      ) AS scores ON scores.user_id = groningen_user_ids.id ${req.query.groningen_only === 'true' ? `WHERE is_groningen = 1` : ''}`);
 
   if (req.query.sorter !== undefined) {
     switch (req.query.sorter) {
-      case 'clears':
-        result = result.sort((a, b) => {
-          return (b.count_ssh + b.count_ss + b.count_sh + b.count_s + b.count_a) - (a.count_ssh + a.count_ss + a.count_sh + a.count_s + a.count_a);
-        });
-        break;
-      case 'total_ss':
-        result = result.sort((a, b) => {
-          return (b.count_ssh + b.count_ss) - (a.count_ssh + a.count_ss);
-        });
-        break;
-      case 'total_s':
-        result = result.sort((a, b) => {
-          return (b.count_sh + b.count_s) - (a.count_sh + a.count_s);
-        });
-        break;
       case 'city':
         result = result.sort((a, b) => {
+          if (a.city === null) return 1;
+          if (b.city === null) return -1;
           return ('' + b.city).localeCompare(a.city);
         });
         break;
