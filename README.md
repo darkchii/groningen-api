@@ -46,8 +46,9 @@ Returns the above object with the specific user data. (https://darkchii.nl/groni
 Returns a list of all players, each using the structure above. (https://darkchii.nl/groningen/api/users)
 
 **Parameters**
-- `groningen_only=true` - Filter to output only users from the province of Groningen
+- `groningen_only=true` - Filter to output only users from the province of Groningen, this is `true` by default
 - `sorter=pp` - Sort by a certain column, works on all numeric values and city column
+- Example: `https://darkchii.nl/groningen/api/users?sorter=pp`
 
 
 
