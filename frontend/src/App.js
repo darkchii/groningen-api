@@ -1,4 +1,4 @@
-import { Avatar, Box, ButtonGroup, Chip, Container, createTheme, CssBaseline, FormControlLabel, Grid, Link, Paper, Stack, Switch, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Tooltip, Typography } from '@mui/material';
+import { Avatar, Box, ButtonGroup, Chip, CircularProgress, Container, createTheme, CssBaseline, FormControlLabel, Grid, Link, Paper, Stack, Switch, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Tooltip, Typography } from '@mui/material';
 import './App.css';
 import { ChiiContainer } from './Components/ChiiContainer';
 import Theme from './Theme';
@@ -12,6 +12,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import { UserChip } from './Components/UserChip';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpwardRounded';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownwardRounded';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
 moment.locale('nl');
 
@@ -147,7 +148,7 @@ function App() {
                         userList.length > 0 ? userList.map((user, index) => (
                           <TableRow sx={{ backgroundColor: `${user.is_groningen ? 'inherit' : 'rgba(255,0,0,0.1)'}` }}>
                             <TableCell maxWidth={0.1}>{index + 1}</TableCell>
-                            <TableCell maxWidth={0.2}><UserChip user={user} /></TableCell>
+                            <TableCell maxWidth={0.2}><UserChip user={user} /> { user.is_fetched===0 ? <Tooltip title='Van deze gebruiker ontbreekt nog wat data. Kijk later terug.'><CircularProgress size={15} /></Tooltip> : <></> }</TableCell>
                             {
                               columns.map((column) => (
                                 column.active && (
