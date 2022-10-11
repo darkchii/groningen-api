@@ -4,7 +4,7 @@ import { ChiiContainer } from './Components/ChiiContainer';
 import Theme from './Theme';
 import Sorters from './Sorters';
 import { ChiiButton } from './Components/ChiiButton';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getUsers } from './Helpers';
 import moment from 'moment/moment';
 import 'moment/locale/nl';
@@ -40,6 +40,9 @@ function App() {
   ]);
   const [updateTable, triggerTableUpdate] = useState(false);
   const [updateUsers, triggerUsersUpdate] = useState(false);
+
+  const [, updateState] = React.useState();
+  const forceUpdate = React.useCallback(() => updateState({}), []);
 
   useEffect(() => {
     columns.forEach((column, index) => {
@@ -78,6 +81,7 @@ function App() {
       }
       setUserList(users);
     });
+    localStorage.setItem(`groningen_only`, groningenOnly);
   };
 
   useEffect(() => {
@@ -140,7 +144,7 @@ function App() {
                     </Grid>
                   </Grid>
                   <Grid item xs={12} md={2}>
-                    <FormControlLabel control={<Switch onChange={event => setGroningenOnly(event.target.checked)} checked={groningenOnly} />} label="Alleen Groningen" />
+                    <FormControlLabel control={<Switch onChange={event => setGroningenOnly(event.target.checked)} defaultChecked={groningenOnly} />} label="Alleen Groningen" />
                     {/* <FormControlLabel control={<Switch onChange={event => setReverseState(event.target.checked)} checked={reverseResult} />} label="Omgekeerde volgorde" /> */}
                   </Grid>
                 </Grid>
