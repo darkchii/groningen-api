@@ -55,8 +55,23 @@ router.get('/', async function (req, res, next) {
         count(case when rank = 'C' then 1 end) as count_c,
         count(case when rank = 'D' then 1 end) as count_d,
         MAX(created_at) as latest_activity
-        FROM groningen_scores GROUP BY user_id
-      ) AS scores ON scores.user_id = groningen_user_ids.id ${req.query.groningen_only === 'true' ? `WHERE is_groningen = 1` : ''}`);
+        FROM groningen_scores
+        GROUP BY user_id
+      ) AS scores ON scores.user_id = groningen_user_ids.id
+    ${req.query.groningen_only === 'true' ? `WHERE is_groningen = 1` : ''}`);
+
+  if (result.length > 0) {
+    for await (let user of result) {
+      let scores = await connection.awaitQuery(`
+        SELECT pp FROM groningen_scores LEFT JOIN beatmap ON beatmap.beatmap_id = groningen_scores.beatmap_id WHERE user_id = ? AND (approved = 1 OR approved = 2) ORDER BY pp DESC LIMIT 100
+        `, [user.id]);
+      let weighted_pp = 0;
+      scores.forEach((score, index) => {
+        weighted_pp += (score.pp * (0.95 ** index));
+      });
+      user.weighted_pp = weighted_pp + (416.6667 * (1 - Math.pow(0.9994, user.clears)));
+    }
+  }
 
   if (req.query.sorter !== undefined) {
     switch (req.query.sorter) {
