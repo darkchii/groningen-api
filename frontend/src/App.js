@@ -41,6 +41,30 @@ function App() {
   const [updateTable, triggerTableUpdate] = useState(false);
   const [updateUsers, triggerUsersUpdate] = useState(false);
 
+  useEffect(() => {
+    columns.forEach((column, index) => {
+      const persistActive = localStorage.getItem(`column_${column.id}_active`);
+      if (persistActive) {
+        column.active = JSON.parse(persistActive);
+      }
+
+      const persistReverse = localStorage.getItem(`column_${column.id}_reverse`);
+      if (persistReverse) {
+        column.reverse = JSON.parse(persistReverse);
+      }
+    });
+
+    const persistCurrentSorter = localStorage.getItem('current_sorter');
+    if (persistCurrentSorter) {
+      if (columns.find(s => s.id === persistCurrentSorter)) {
+        setSorter(persistCurrentSorter);
+      }
+    }
+
+    triggerTableUpdate(true);
+    triggerUsersUpdate(true);
+  }, []);
+
   const updateUsersFunc = () => {
     getUsers(sorter, groningenOnly).then(users => {
       let reverse = false;
@@ -72,12 +96,14 @@ function App() {
       columns.forEach(column => {
         if (column.id === _sorter.id) {
           column.reverse = !column.reverse;
+          localStorage.setItem(`column_${column.id}_reverse`, JSON.stringify(column.reverse));
         }
       });
       triggerUsersUpdate(true);
       triggerTableUpdate(false);
     } else {
       setSorter(_sorter.id);
+      localStorage.setItem(`current_sorter`, _sorter.id);
     }
   }
 
@@ -106,6 +132,7 @@ function App() {
                         columns.map((column) => (
                           <FormControlLabel control={<Switch size='small' onChange={event => {
                             column.active = event.target.checked;
+                            localStorage.setItem(`column_${column.id}_active`, JSON.stringify(column.active));
                             triggerTableUpdate(true);
                           }} checked={column.active} />} label={column.label} />
                         ))
@@ -148,7 +175,7 @@ function App() {
                         userList.length > 0 ? userList.map((user, index) => (
                           <TableRow sx={{ backgroundColor: `${user.is_groningen ? 'inherit' : 'rgba(255,0,0,0.1)'}` }}>
                             <TableCell maxWidth={0.1}>{index + 1}</TableCell>
-                            <TableCell maxWidth={0.2}><UserChip user={user} /> { user.is_fetched===0 ? <Tooltip title='Van deze gebruiker ontbreekt nog wat data. Kijk later terug.'><CircularProgress size={15} /></Tooltip> : <></> }</TableCell>
+                            <TableCell maxWidth={0.2}><UserChip user={user} /> {user.is_fetched === 0 ? <Tooltip title='Van deze gebruiker ontbreekt nog wat data. Kijk later terug.'><CircularProgress size={15} /></Tooltip> : <></>}</TableCell>
                             {
                               columns.map((column) => (
                                 column.active && (
