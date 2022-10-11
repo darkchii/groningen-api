@@ -100,6 +100,10 @@ async function updateUser(connection, id) {
     const osu_user = await GetUser(id, 'osu', 'id');
     // console.log(osu_user);
 
+    if(osu_user === null) {
+        return;
+    }
+
     const query = `INSERT INTO groningen_users (
         osu_id,
         username,
@@ -168,7 +172,10 @@ async function updateUser(connection, id) {
         osu_user.statistics.country_rank
     ];
 
+    const _query = `UPDATE groningen_user_ids SET username = '${osu_user.username}' WHERE id = ${osu_user.id}`;
+
     const result = await connection.awaitQuery(query, queryValues);
+    const _result = await connection.awaitQuery(_query);
     // console.log(result);
     console.log(`Inserted or updated user ${osu_user.username}`);
 }

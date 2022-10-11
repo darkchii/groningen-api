@@ -7,16 +7,20 @@ import { ChiiButton } from './Components/ChiiButton';
 import { useEffect, useState } from 'react';
 import { getUsers } from './Helpers';
 import moment from 'moment/moment';
+import 'moment/locale/nl';
 import InfoIcon from '@mui/icons-material/Info';
 import { UserChip } from './Components/UserChip';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpwardRounded';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownwardRounded';
+
+moment.locale('nl');
 
 function App() {
   const [sorter, setSorter] = useState(Sorters[0].key);
   const [userList, setUserList] = useState([]);
   const [groningenOnly, setGroningenOnly] = useState(true);
   const [columns, setColumns] = useState([
+    { active: false, reverse: false, id: 'latest_activity', label: 'Recente activiteit', align: 'right', width: 170, formatter: (value) => (<Tooltip title={moment(value).format('D MMMM YYYY')}><Typography>{moment(value).fromNow()}</Typography></Tooltip>) },
     { active: true, reverse: false, id: 'pp', label: 'PP', align: 'right', width: 170, formatter: (value) => value > 0 ? `${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp` : '-' },
     { active: true, reverse: false, id: 'total_pp', label: 'Total PP', align: 'right', width: 170, formatter: (value) => value > 0 ? `${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp` : '-' },
     { active: true, reverse: false, id: 'play_count', label: 'Playcount', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },

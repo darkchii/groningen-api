@@ -35,7 +35,8 @@ router.get('/', async function (req, res, next) {
   const selector = `
   DISTINCT(groningen_user_ids.id) as id, groningen_users.username as username, added, note, is_fetched, city, is_groningen, color,
   osu_id, join_date, level, pp_rank, groningen_users.pp as pp, ranked_score, hit_accuracy, play_count, play_time, total_score, total_hits, maximum_combo, replays_watched, is_ranked, country_rank, 
-  scores.total_pp, scores.clears, (scores.count_ss+scores.count_ssh) as total_ss, scores.count_ssh, scores.count_ss, (scores.count_s+scores.count_sh) as total_s, scores.count_sh, scores.count_s, scores.count_a, scores.count_b, scores.count_c, scores.count_d
+  scores.total_pp, scores.clears, (scores.count_ss+scores.count_ssh) as total_ss, scores.count_ssh, scores.count_ss, (scores.count_s+scores.count_sh) as total_s, scores.count_sh, scores.count_s, scores.count_a, scores.count_b, scores.count_c, scores.count_d,
+  scores.latest_activity
   `;
   let result = await connection.awaitQuery(`
     SELECT ${selector} FROM groningen_user_ids 
@@ -52,7 +53,8 @@ router.get('/', async function (req, res, next) {
         count(case when rank = 'A' then 1 end) as count_a,
         count(case when rank = 'B' then 1 end) as count_b,
         count(case when rank = 'C' then 1 end) as count_c,
-        count(case when rank = 'D' then 1 end) as count_d
+        count(case when rank = 'D' then 1 end) as count_d,
+        MAX(created_at) as latest_activity
         FROM groningen_scores GROUP BY user_id
       ) AS scores ON scores.user_id = groningen_user_ids.id ${req.query.groningen_only === 'true' ? `WHERE is_groningen = 1` : ''}`);
 
