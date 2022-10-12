@@ -65,14 +65,19 @@ router.get('/', cache("5 minutes"), async function (req, res, next) {
 
   if (result.length > 0) {
     for await (let user of result) {
-      let scores = await connection.awaitQuery(`
-        SELECT pp FROM groningen_scores LEFT JOIN beatmap ON beatmap.beatmap_id = groningen_scores.beatmap_id WHERE user_id = ? AND (approved = 1 OR approved = 2) ORDER BY pp DESC LIMIT 1000
-        `, [user.id]);
-      let weighted_pp = 0;
-      scores.forEach((score, index) => {
-        weighted_pp += (score.pp * (0.95 ** index));
-      });
-      user.weighted_pp = weighted_pp + (416.6667 * (1 - Math.pow(0.9994, user.clears)));
+      if (user.pp === 0) {
+        let scores = await connection.awaitQuery(`
+          SELECT pp FROM groningen_scores LEFT JOIN beatmap ON beatmap.beatmap_id = groningen_scores.beatmap_id WHERE user_id = ? AND (approved = 1 OR approved = 2) ORDER BY pp DESC LIMIT 1000
+          `, [user.id]);
+        let weighted_pp = 0;
+        scores.forEach((score, index) => {
+          weighted_pp += (score.pp * (0.95 ** index));
+        });
+        user.pp = weighted_pp + (416.6667 * (1 - Math.pow(0.9994, user.clears)));
+        user.approx_pp = true;
+      } else {
+        user.approx_pp = false;
+      }
     }
   }
 
@@ -87,7 +92,7 @@ router.get('/', cache("5 minutes"), async function (req, res, next) {
         break;
       case 'pp':
         result = result.sort((a, b) => {
-          return (b.pp===0 ? b.weighted_pp : b.pp) - (a.pp===0 ? a.weighted_pp : a.pp);
+          return (b.pp === 0 ? b.weighted_pp : b.pp) - (a.pp === 0 ? a.weighted_pp : a.pp);
         });
         break;
       default:
