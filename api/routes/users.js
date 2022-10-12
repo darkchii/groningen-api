@@ -1,6 +1,9 @@
 var express = require('express');
 var router = express.Router();
 const mysql = require('mysql-await');
+var cacheService = require("express-api-cache");
+var cache = cacheService.cache;
+
 require('dotenv').config();
 
 const connConfig = {
@@ -23,7 +26,7 @@ function buildQuery(params) {
 }
 
 /* GET users listing. */
-router.get('/', async function (req, res, next) {
+router.get('/', cache("5 minutes"), async function (req, res, next) {
   const connection = mysql.createConnection(connConfig);
   connection.on('error', (err) => {
     res.json({
@@ -63,7 +66,7 @@ router.get('/', async function (req, res, next) {
   if (result.length > 0) {
     for await (let user of result) {
       let scores = await connection.awaitQuery(`
-        SELECT pp FROM groningen_scores LEFT JOIN beatmap ON beatmap.beatmap_id = groningen_scores.beatmap_id WHERE user_id = ? AND (approved = 1 OR approved = 2) ORDER BY pp DESC LIMIT 100
+        SELECT pp FROM groningen_scores LEFT JOIN beatmap ON beatmap.beatmap_id = groningen_scores.beatmap_id WHERE user_id = ? AND (approved = 1 OR approved = 2) ORDER BY pp DESC LIMIT 1000
         `, [user.id]);
       let weighted_pp = 0;
       scores.forEach((score, index) => {
@@ -80,6 +83,11 @@ router.get('/', async function (req, res, next) {
           if (a.city === null) return 1;
           if (b.city === null) return -1;
           return ('' + b.city).localeCompare(a.city);
+        });
+        break;
+      case 'pp':
+        result = result.sort((a, b) => {
+          return (b.pp===0 ? b.weighted_pp : b.pp) - (a.pp===0 ? a.weighted_pp : a.pp);
         });
         break;
       default:

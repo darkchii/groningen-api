@@ -21,22 +21,22 @@ function App() {
   const [userList, setUserList] = useState([]);
   const [groningenOnly, setGroningenOnly] = useState(true);
   const [columns, setColumns] = useState([
-    { active: false, reverse: false, id: 'latest_activity', label: 'Recente activiteit', align: 'right', width: 170, formatter: (value) => (<Tooltip title={moment(value).format('D MMMM YYYY')}><Typography>{moment(value).fromNow()}</Typography></Tooltip>) },
-    { active: true, reverse: false, id: 'pp', label: 'PP', align: 'right', width: 170, formatter: (value) => value > 0 ? `${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp` : '-' },
-    { active: true, reverse: false, id: 'total_pp', label: 'Total PP', align: 'right', width: 170, formatter: (value) => value > 0 ? `${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp` : '-' },
-    { active: true, reverse: false, id: 'play_count', label: 'Playcount', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
-    { active: true, reverse: false, id: 'play_time', label: 'Playtime', align: 'right', width: 170, formatter: (value) => `${Math.round(moment.duration(value, 'seconds').asHours())} hours` },
-    { active: true, reverse: false, id: 'hit_accuracy', label: 'Accuracy', align: 'right', width: 170, formatter: (value) => `${value.toFixed(2)}%` },
-    { active: true, reverse: false, id: 'ranked_score', label: 'R. Score', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
-    { active: true, reverse: false, id: 'total_score', label: 'T. Score', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
-    { active: true, reverse: false, id: 'clears', label: 'Clears', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
-    { active: true, reverse: false, id: 'total_ss', label: 'SS', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
-    { active: true, reverse: false, id: 'total_s', label: 'S', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
-    { active: true, reverse: false, id: 'count_a', label: 'A', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
-    { active: false, reverse: false, id: 'count_b', label: 'B', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
-    { active: false, reverse: false, id: 'count_c', label: 'C', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
-    { active: false, reverse: false, id: 'count_d', label: 'D', align: 'right', width: 170, formatter: (value) => value.toLocaleString('en-US') },
-    { active: true, reverse: false, id: 'city', label: 'Plaats', align: 'right', width: 170, formatter: (value) => value },
+    { active: false, reverse: false, id: 'latest_activity', label: 'Recente activiteit', align: 'right', width: 170, formatter: (user, value) => (<Tooltip title={moment(value).format('D MMMM YYYY')}><Typography>{moment(value).fromNow()}</Typography></Tooltip>) },
+    { active: true, reverse: false, id: 'pp', label: 'PP', align: 'right', width: 170, formatter: (user, value) => value > 0 ? `${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp` : <Tooltip title='User is inactive, this PP value is calculated from their top 1000 scores and may be incorrect.'><Grid sx={{ opacity: 0.7 }}>~{user.weighted_pp.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp</Grid></Tooltip> },
+    { active: true, reverse: false, id: 'total_pp', label: 'Total PP', align: 'right', width: 170, formatter: (user, value) => value > 0 ? `${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp` : '-' },
+    { active: true, reverse: false, id: 'play_count', label: 'Playcount', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
+    { active: true, reverse: false, id: 'play_time', label: 'Playtime', align: 'right', width: 170, formatter: (user, value) => `${Math.round(moment.duration(value, 'seconds').asHours())} hours` },
+    { active: true, reverse: false, id: 'hit_accuracy', label: 'Accuracy', align: 'right', width: 170, formatter: (user, value) => `${value.toFixed(2)}%` },
+    { active: true, reverse: false, id: 'ranked_score', label: 'R. Score', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
+    { active: true, reverse: false, id: 'total_score', label: 'T. Score', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
+    { active: true, reverse: false, id: 'clears', label: 'Clears', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
+    { active: true, reverse: false, id: 'total_ss', label: 'SS', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
+    { active: true, reverse: false, id: 'total_s', label: 'S', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
+    { active: true, reverse: false, id: 'count_a', label: 'A', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
+    { active: false, reverse: false, id: 'count_b', label: 'B', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
+    { active: false, reverse: false, id: 'count_c', label: 'C', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
+    { active: false, reverse: false, id: 'count_d', label: 'D', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
+    { active: true, reverse: false, id: 'city', label: 'Plaats', align: 'right', width: 170, formatter: (user, value) => value },
   ]);
   const [updateTable, triggerTableUpdate] = useState(false);
   const [updateUsers, triggerUsersUpdate] = useState(false);
@@ -84,9 +84,10 @@ function App() {
     localStorage.setItem(`groningen_only`, groningenOnly);
   };
 
-  useEffect(() => {
-    updateUsersFunc();
-  }, [sorter, groningenOnly]);
+  // useEffect(() => {
+  //   updateUsersFunc();
+  //   console.log('this got called on start');
+  // }, [sorter, groningenOnly]);
 
   useEffect(() => {
     if (updateUsers) {
@@ -107,6 +108,7 @@ function App() {
       triggerTableUpdate(false);
     } else {
       setSorter(_sorter.id);
+      triggerUsersUpdate(true);
       localStorage.setItem(`current_sorter`, _sorter.id);
     }
   }
@@ -183,7 +185,7 @@ function App() {
                             {
                               columns.map((column) => (
                                 column.active && (
-                                  <TableCell align={column.align} maxWidth={column.width}>{column.formatter(user[column.id])}</TableCell>
+                                  <TableCell align={column.align} maxWidth={column.width}>{column.formatter(user, user[column.id])}</TableCell>
                                 )
                               ))
                             }
