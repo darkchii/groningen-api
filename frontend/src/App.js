@@ -21,8 +21,8 @@ function App() {
   const [userList, setUserList] = useState([]);
   const [groningenOnly, setGroningenOnly] = useState(true);
   const [columns, setColumns] = useState([
-    { active: false, reverse: false, id: 'latest_activity', label: 'Recente activiteit', align: 'right', width: 170, formatter: (user, value) => (<Tooltip title={moment(value).format('D MMMM YYYY')}><Typography>{moment(value).fromNow()}</Typography></Tooltip>) },
-    { active: true, reverse: false, id: 'pp', label: 'PP', align: 'right', width: 170, formatter: (user, value) => !user.approx_pp ? `${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp` : <Tooltip title='User is inactive, this PP value is calculated from their top 1000 scores and may be inaccurate.'><Grid sx={{ opacity: 0.7 }}>~{user.pp.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp</Grid></Tooltip> },
+    { active: false, reverse: false, id: 'latest_activity', label: 'Recente activiteit', align: 'right', width: 170, formatter: (user, value) => (<Tooltip title={moment(value).format('D MMMM YYYY HH:mm:ss')}><Typography>{moment(value).fromNow()}</Typography></Tooltip>) },
+    { active: true, reverse: false, id: 'pp', label: 'PP', align: 'right', width: 170, formatter: (user, value) => !user.approx_pp ? `${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp` : <Tooltip title='Gebruiker is inactief. Dit getal is gebaseerd op de top 1000 scores van deze speler en kan onnauwkeurig zijn.'><Grid sx={{ opacity: 0.7 }}>~{user.pp.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp</Grid></Tooltip> },
     { active: true, reverse: false, id: 'total_pp', label: 'Total PP', align: 'right', width: 170, formatter: (user, value) => value > 0 ? `${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp` : '-' },
     { active: true, reverse: false, id: 'play_count', label: 'Playcount', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
     { active: true, reverse: false, id: 'play_time', label: 'Playtime', align: 'right', width: 170, formatter: (user, value) => `${Math.round(moment.duration(value, 'seconds').asHours())} hours` },
@@ -195,6 +195,11 @@ function App() {
                     </TableBody>
                   </Table>
                 </TableContainer>
+              </Grid>
+              <Grid sx={{ p: 1, mt: 1, borderRadius: '5px', backgroundColor: '#1b283877' }}>
+                <Grid container>
+                  <Typography variant="body2" align="center">Website gemaakt door Amayakase &bull; <Link href="https://twitter.com/id2amayakase">Twitter</Link> &bull; <Link href="https://github.com/darkchii/groningen-api">GitHub</Link></Typography>
+                </Grid>
               </Grid>
             </Grid>
           </ChiiContainer>
