@@ -146,7 +146,7 @@ function App() {
                     </Grid>
                   </Grid>
                   <Grid item xs={12} md={2}>
-                    <FormControlLabel control={<Switch onChange={event => setGroningenOnly(event.target.checked)} defaultChecked={groningenOnly} />} label="Alleen Groningen" />
+                    <FormControlLabel control={<Switch onChange={event => { setGroningenOnly(event.target.checked); triggerUsersUpdate(true); }} defaultChecked={groningenOnly} />} label="Alleen Groningen" />
                     {/* <FormControlLabel control={<Switch onChange={event => setReverseState(event.target.checked)} checked={reverseResult} />} label="Omgekeerde volgorde" /> */}
                   </Grid>
                 </Grid>
