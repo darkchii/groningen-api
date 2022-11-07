@@ -13,6 +13,7 @@ import { UserChip } from './Components/UserChip';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpwardRounded';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownwardRounded';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import WarningIcon from '@mui/icons-material/Warning';
 
 moment.locale('nl');
 
@@ -20,10 +21,9 @@ function App() {
   const [sorter, setSorter] = useState(Sorters[0].key);
   const [userList, setUserList] = useState([]);
   const [groningenOnly, setGroningenOnly] = useState(true);
+  const [showRestricted, setShowRestricted] = useState(false);
   const [columns, setColumns] = useState([
-    { active: false, reverse: false, id: 'latest_activity', label: 'Recente activiteit', align: 'right', width: 170, formatter: (user, value) => (<Tooltip title={moment(value).format('D MMMM YYYY HH:mm:ss')}><Typography>{moment(value).fromNow()}</Typography></Tooltip>) },
     { active: true, reverse: false, id: 'pp', label: 'PP', align: 'right', width: 170, formatter: (user, value) => !user.approx_pp ? `${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp` : <Tooltip title='Gebruiker is inactief. Dit getal is gebaseerd op de top 1000 scores van deze speler en kan onnauwkeurig zijn.'><Grid sx={{ opacity: 0.7 }}>~{user.pp.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp</Grid></Tooltip> },
-    { active: true, reverse: false, id: 'total_pp', label: 'Total PP', align: 'right', width: 170, formatter: (user, value) => value > 0 ? `${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp` : '-' },
     { active: true, reverse: false, id: 'play_count', label: 'Playcount', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
     { active: true, reverse: false, id: 'play_time', label: 'Playtime', align: 'right', width: 170, formatter: (user, value) => `${Math.round(moment.duration(value, 'seconds').asHours())} hours` },
     { active: true, reverse: false, id: 'hit_accuracy', label: 'Accuracy', align: 'right', width: 170, formatter: (user, value) => `${value.toFixed(2)}%` },
@@ -33,9 +33,6 @@ function App() {
     { active: true, reverse: false, id: 'total_ss', label: 'SS', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
     { active: true, reverse: false, id: 'total_s', label: 'S', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
     { active: true, reverse: false, id: 'count_a', label: 'A', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
-    { active: false, reverse: false, id: 'count_b', label: 'B', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
-    { active: false, reverse: false, id: 'count_c', label: 'C', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
-    { active: false, reverse: false, id: 'count_d', label: 'D', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
     { active: true, reverse: false, id: 'city', label: 'Plaats', align: 'right', width: 170, formatter: (user, value) => value },
   ]);
   const [updateTable, triggerTableUpdate] = useState(false);
@@ -69,7 +66,7 @@ function App() {
   }, []);
 
   const updateUsersFunc = () => {
-    getUsers(sorter, groningenOnly).then(users => {
+    getUsers(sorter, groningenOnly, showRestricted).then(users => {
       let reverse = false;
       columns.forEach(column => {
         if (column.id === sorter) {
@@ -82,6 +79,7 @@ function App() {
       setUserList(users);
     });
     localStorage.setItem(`groningen_only`, groningenOnly);
+    localStorage.setItem(`show_restricted`, showRestricted);
   };
 
   // useEffect(() => {
@@ -147,6 +145,7 @@ function App() {
                   </Grid>
                   <Grid item xs={12} md={2}>
                     <FormControlLabel control={<Switch onChange={event => { setGroningenOnly(event.target.checked); triggerUsersUpdate(true); }} defaultChecked={groningenOnly} />} label="Alleen Groningen" />
+                    <FormControlLabel control={<Switch onChange={event => { setShowRestricted(event.target.checked); triggerUsersUpdate(true); }} defaultChecked={showRestricted} />} label="Toon restricted" />
                     {/* <FormControlLabel control={<Switch onChange={event => setReverseState(event.target.checked)} checked={reverseResult} />} label="Omgekeerde volgorde" /> */}
                   </Grid>
                 </Grid>
@@ -181,7 +180,7 @@ function App() {
                         userList.length > 0 ? userList.map((user, index) => (
                           <TableRow sx={{ backgroundColor: `${user.is_groningen ? 'inherit' : 'rgba(255,0,0,0.1)'}` }}>
                             <TableCell maxWidth={0.1}>{index + 1}</TableCell>
-                            <TableCell maxWidth={0.2}><UserChip user={user} /> {user.is_fetched === 0 ? <Tooltip title='Van deze gebruiker ontbreekt nog wat data. Kijk later terug.'><CircularProgress size={15} /></Tooltip> : <></>}</TableCell>
+                            <TableCell maxWidth={0.2}><UserChip user={user} /> {user.is_restricted ? <Tooltip title={`Deze gebruiker is restricted op Bancho!`}><Chip color='error' variant="outlined" size='small' label={<WarningIcon sx={{pt:0.5}} />} /></Tooltip> : ''}</TableCell>
                             {
                               columns.map((column) => (
                                 column.active && (

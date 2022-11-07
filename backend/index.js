@@ -1,6 +1,6 @@
 const moment = require('moment/moment');
 const mysql = require('mysql-await');
-const { GetUser, GetBeatmaps, GetUserRecent, getModsEnum, GetUserBeatmapScore, GetUserMostPlayed } = require('./osu');
+const { GetUser } = require('./osu');
 const OsuScore = require('./score');
 require('dotenv').config();
 
@@ -19,10 +19,10 @@ async function looper() {
         // console.log('looping');
         const connection = mysql.createConnection(connConfig);
         const result = await connection.awaitQuery(`SELECT * FROM groningen_user_ids`);
+        const restrict_check = (await GetUser('peppy', 'string', 'username')) !== null;
 
         for await (const row of result) {
-            await updateUser(connection, row.id);
-            await updateScores(connection, row.id);
+            await updateUser(connection, row.id, restrict_check);
             await sleep(1000);
         }
 
@@ -31,76 +31,30 @@ async function looper() {
     }
 }
 
-// adds EVERY score of a user to the database
-async function fetcher() {
-    while (true) {
-        //const beatmaps = await GetBeatmaps();
-        const connection = mysql.createConnection(connConfig);
-        const result = await connection.awaitQuery(`SELECT * FROM groningen_user_ids`);
-
-        for await (const row of result) {
-            if (row.is_fetched === 1) {
-                continue;
-            }
-            const beatmaps = [];
-            let offset = 0;
-            console.log(`Started fetching scores for ${row.id}`);
-            while (true) {
-                const _beatmaps = await GetUserMostPlayed(row.id, 'osu', 100, offset);
-                if (_beatmaps.length === 0) {
-                    break;
-                }
-                beatmaps.push(..._beatmaps);
-                offset += 100;
-                console.log(`Added beatmap range ${offset - 100} - ${offset} for user ${row.id}`);
-            }
-            console.log(`Checking ${beatmaps.length} beatmaps for ${row.id}`);
-            await fetchUser(row.id, beatmaps);
-            console.log(`Finished fetching scores for ${row.id}`);
-            await connection.awaitQuery(`UPDATE groningen_user_ids SET is_fetched = 1 WHERE id = ${row.id}`); //23635008, 15413621
-        }
-        await connection.end();
-        await sleep(process.env.SCORE_FETCH_INTERVAL);
-    }
-}
-
-async function fetchUser(id, beatmaps) {
-    let counter = 0;
-    for await (const beatmap of beatmaps) {
-        let score;
-        try {
-            const res = await GetUserBeatmapScore(id, beatmap.beatmap_id);
-            score = new OsuScore(res.score);
-        } catch (e) {
-            score = { "error": "null" }
-        }
-        if (score.error !== 'null') {
-            try {
-                const connection = mysql.createConnection(connConfig);
-                insertScore(connection, score);
-                await connection.end();
-            } catch (e) {
-                //failed.push(beatmap);
-                continue;
-            }
-        }
-        counter++;
-        console.log(`Score fetcher for ${id}: ${counter}/${beatmaps.length}`);
-    }
-}
-
 function main() {
-    fetcher();
     looper();
 }
 main();
 
-async function updateUser(connection, id) {
+let restrict_check_data = [];
+
+async function updateUser(connection, id, restrict_check = false) {
     // console.log('updating user ' + id);
     const osu_user = await GetUser(id, 'osu', 'id');
     // console.log(osu_user);
 
-    if(osu_user === null) {
+    if (osu_user === null) {
+        if(restrict_check){
+            if(restrict_check_data[id] === undefined){
+                restrict_check_data[id] = 0;
+            }
+            restrict_check_data[id]++;
+
+            if(restrict_check_data[id] > 5){
+                await connection.awaitQuery(`UPDATE groningen_user_ids SET is_restricted = 1 WHERE id = ${id}`);
+                console.log(`user ${id} is restricted, updated accordingly`);
+            }
+        }
         return;
     }
 
@@ -172,43 +126,10 @@ async function updateUser(connection, id) {
         osu_user.statistics.country_rank
     ];
 
-    const _query = `UPDATE groningen_user_ids SET username = '${osu_user.username}' WHERE id = ${osu_user.id}`;
+    const _query = `UPDATE groningen_user_ids SET username = '${osu_user.username}', is_restricted = 0 WHERE id = ${osu_user.id}`;
 
     const result = await connection.awaitQuery(query, queryValues);
     const _result = await connection.awaitQuery(_query);
     // console.log(result);
     console.log(`Inserted or updated user ${osu_user.username}`);
-}
-
-async function updateScores(connection, id) {
-    const _scores = await GetUserRecent(id);
-    const scores = _scores.map(score => {
-        return new OsuScore(score);
-    });
-
-    if (scores.length > 0) {
-        scores.filter(score => score.best_id === null);
-
-        scores.forEach(async score => {
-            insertScore(connection, score);
-            // console.log(`${id}: Inserted or updated score ${score.id}`);
-            // console.log(result);
-        });
-    }
-
-    const nullScores = await getUserNullScores(connection, id);
-    if (nullScores.length > 0) {
-        console.log(`Found ${nullScores.length} null scores for user ${id}`);
-        await fetchUser(id, nullScores);
-    }
-}
-
-async function getUserNullScores(connection, id) {
-    const result = await connection.awaitQuery(`SELECT * FROM groningen_scores INNER JOIN beatmap ON beatmap.beatmap_id = groningen_scores.beatmap_id WHERE user_id = ${id} AND pp IS NULL AND (approved=1 OR approved=2)`);
-    return result;
-}
-
-async function insertScore(connection, score) {
-    const score_query = score.getQuery();
-    const result = await connection.awaitQuery(score_query.query, score_query.queryValues);
 }
