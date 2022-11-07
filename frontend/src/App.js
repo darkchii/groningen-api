@@ -23,7 +23,8 @@ function App() {
   const [groningenOnly, setGroningenOnly] = useState(true);
   const [showRestricted, setShowRestricted] = useState(false);
   const [columns, setColumns] = useState([
-    { active: true, reverse: false, id: 'pp', label: 'PP', align: 'right', width: 170, formatter: (user, value) => !user.approx_pp ? `${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp` : <Tooltip title='Gebruiker is inactief. Dit getal is gebaseerd op de top 1000 scores van deze speler en kan onnauwkeurig zijn.'><Grid sx={{ opacity: 0.7 }}>~{user.pp.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp</Grid></Tooltip> },
+    { active: true, reverse: false, id: 'pp_rank', label: 'Global Rank', align: 'right', width: 170, formatter: (user, value) => value===null ? `-` : `#${value.toLocaleString('en-US')}` },
+    { active: true, reverse: false, id: 'pp', label: 'PP', align: 'right', width: 170, formatter: (user, value) => value===null || value===0 ? `-` : `${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}pp` },
     { active: true, reverse: false, id: 'play_count', label: 'Playcount', align: 'right', width: 170, formatter: (user, value) => value.toLocaleString('en-US') },
     { active: true, reverse: false, id: 'play_time', label: 'Playtime', align: 'right', width: 170, formatter: (user, value) => `${Math.round(moment.duration(value, 'seconds').asHours())} hours` },
     { active: true, reverse: false, id: 'hit_accuracy', label: 'Accuracy', align: 'right', width: 170, formatter: (user, value) => `${value.toFixed(2)}%` },

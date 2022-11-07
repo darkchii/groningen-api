@@ -37,7 +37,7 @@ router.get('/', cache("5 minutes"), async function (req, res, next) {
   const query = buildQuery(req.query);
   const selector = `
   DISTINCT(groningen_user_ids.id) as id, groningen_users.username as username, added, note, is_fetched, city, is_groningen, color, is_restricted,
-  osu_id, join_date, level, pp_rank, IFNULL(pp, 0) as pp, ranked_score, hit_accuracy, play_count, play_time, total_score, total_hits, maximum_combo, replays_watched, is_ranked, country_rank,
+  osu_id, join_date, level, pp_rank, pp, ranked_score, hit_accuracy, play_count, play_time, total_score, total_hits, maximum_combo, replays_watched, is_ranked, country_rank,
   (count_ssh+count_ss+count_sh+count_s+count_a) as clears, (count_ssh+count_ss) as total_ss, (count_sh+count_sh) as total_s, count_ssh, count_ss, count_sh, count_s, count_a
   `;
   let result = await connection.awaitQuery(`
@@ -54,13 +54,10 @@ router.get('/', cache("5 minutes"), async function (req, res, next) {
           return ('' + b.city).localeCompare(a.city);
         });
         break;
-      case 'pp':
-        result = result.sort((a, b) => {
-          return b.pp - a.pp;
-        });
-        break;
       default:
         result = result.sort((a, b) => {
+          if(a[req.query.sorter] === null) return -1;
+          if(b[req.query.sorter] === null) return 1;
           return b[req.query.sorter] - a[req.query.sorter];
         });
         break;
