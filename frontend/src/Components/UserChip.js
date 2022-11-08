@@ -14,7 +14,7 @@ export class UserChip extends Component {
     render() {
         return (
             <Tooltip title={this.props.user.note} enterDelay={300} leaveDelay={50}>
-                <Link href={`https://osu.ppy.sh/users/${this.props.user.id}`} target='_blank'>
+                <Link href={this.props.user.id===13674823 ? `http://leeuwz.nl/` : `https://osu.ppy.sh/users/${this.props.user.id}`} target='_blank'>
                     <Chip sx={{ 
                         bgcolor: `#${this.getColor()}33`,
                         '&:hover': {

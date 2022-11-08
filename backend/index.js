@@ -58,6 +58,8 @@ async function updateUser(connection, id, restrict_check = false) {
         return;
     }
 
+    restrict_check_data[id] = 0;
+
     const query = `INSERT INTO groningen_users (
         osu_id,
         username,
